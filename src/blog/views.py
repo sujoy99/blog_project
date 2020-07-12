@@ -8,7 +8,11 @@ from .forms import BlogPostModelForm
 
 def blog_post_list_view(request):
     template_name = "blog/list.html"
-    queryset = BlogPost.objects.all()
+    # queryset = BlogPost.objects.published()
+    queryset = BlogPost.objects.all().published()
+    if request.user.is_authenticated:
+        my_qs = BlogPost.objects.filter(user=request.user)
+        queryset = (queryset | my_qs).distinct()
     context = {
         'object_list' : queryset
     }
@@ -18,7 +22,7 @@ def blog_post_list_view(request):
 @login_required()
 def blog_post_create_view(request):
     template_name = "form.html"
-    form = BlogPostModelForm(request.POST or  None)
+    form = BlogPostModelForm(request.POST or  None, request.FILES or None)
     if form.is_valid():
         obj = form.save(commit=False)
         obj.slug = form.cleaned_data.get("slug").lower()
